@@ -15,6 +15,7 @@ import { useAuth } from "../../context/AuthContext";
 import { appointmentService } from "../../services/appointmentService";
 import { medicalService } from "../../services/medicalService";
 import { prescriptionService } from "../../services/prescriptionService";
+import { paymentService } from "../../services/paymentService";
 import { patientService } from "../../services/patientService";
 
 import DashboardLayout from "../../layouts/DashboardLayout";
@@ -45,6 +46,8 @@ const createEmptyMedicineRow = () => ({
   quantity: "",
   instructions: "",
 });
+// Default examination fee used for generated invoices.
+const DEFAULT_EXAMINATION_FEE = 250000;
 
 // =====================================================
 // HELPERS
@@ -891,7 +894,14 @@ export const ExaminationPage = () => {
       event.preventDefault();
 
       setError("");
-      setSuccessMessage("");
+              // Create or reuse the invoice for this completed appointment.
+        await paymentService.createInvoice({
+          appointmentId: Number(appointmentId),
+          patientId: Number(appointment.patientId),
+          notes: `Hóa đơn cho lịch khám APP-${appointmentId}`,
+          items: invoiceItems,
+        });
+setSuccessMessage("");
 
       if (
         !appointment
@@ -972,7 +982,44 @@ export const ExaminationPage = () => {
         }
       }
 
-      setSaving(true);
+            // Build invoice details: consultation fee + selected medicines.
+      const invoiceItems = [
+        {
+          itemType: "EXAMINATION",
+          description: "Phí khám bệnh",
+          quantity: 1,
+          unitPrice: DEFAULT_EXAMINATION_FEE,
+        },
+      ];
+
+      for (const item of selectedMedicines) {
+        const medicine = medicines.find(
+          (candidate) =>
+            Number(candidate.id) === Number(item.medicineId)
+        );
+
+        const unitPrice = Number(medicine?.price);
+
+        if (
+          !medicine ||
+          !Number.isFinite(unitPrice) ||
+          unitPrice < 0
+        ) {
+          setError(
+            `Không xác định được giá của thuốc #${item.medicineId}.`
+          );
+          return;
+        }
+
+        invoiceItems.push({
+          itemType: "MEDICINE",
+          description:
+            medicine.name || `Thuốc #${item.medicineId}`,
+          quantity: Number(item.quantity),
+          unitPrice,
+        });
+      }
+setSaving(true);
 
       /*
        * currentAppointment dùng để biết
@@ -1247,7 +1294,7 @@ export const ExaminationPage = () => {
         // =============================================
 
         setSuccessMessage(
-          "Đã hoàn tất ca khám và lưu dữ liệu thành công."
+          "Đã hoàn tất ca khám, lưu hồ sơ và tạo hóa đơn thanh toán."
         );
 
         window.setTimeout(

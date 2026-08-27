@@ -214,10 +214,16 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.GET, "/api/invoices/**", "/api/payments/**")
                                 .hasAnyRole("PATIENT", "RECEPTIONIST", "ADMIN")
 
-                                .requestMatchers(HttpMethod.POST, "/api/invoices/**", "/api/payments/**")
+                                .requestMatchers(HttpMethod.POST, "/api/invoices", "/api/invoices/")
+                                .hasAnyRole("DOCTOR", "RECEPTIONIST", "ADMIN")
+
+                                .requestMatchers(HttpMethod.POST, "/api/payments", "/api/payments/")
                                 .hasAnyRole("PATIENT", "RECEPTIONIST", "ADMIN")
 
-                                .requestMatchers(HttpMethod.PATCH, "/api/invoices/**", "/api/payments/*/pay")
+                                .requestMatchers(HttpMethod.PATCH, "/api/invoices/**")
+                                .hasAnyRole("RECEPTIONIST", "ADMIN")
+
+                                .requestMatchers(HttpMethod.PATCH, "/api/payments/*/pay")
                                 .hasAnyRole("PATIENT", "RECEPTIONIST", "ADMIN")
 
                                 .requestMatchers(HttpMethod.PATCH, "/api/payments/*/refund")

@@ -56,12 +56,13 @@ public class InvoiceService {
             );
         }
 
-        if (invoiceRepository.existsByAppointmentId(
-                invoice.getAppointmentId()
-        )) {
-            throw new RuntimeException(
-                    "Lịch khám này đã có hóa đơn"
-            );
+        var existingInvoice =
+                invoiceRepository.findByAppointmentId(
+                        invoice.getAppointmentId()
+                );
+
+        if (existingInvoice.isPresent()) {
+            return existingInvoice.get();
         }
 
         AppointmentResponse appointment =

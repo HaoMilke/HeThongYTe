@@ -54,6 +54,7 @@ public class DoctorService {
 
         doctor.setFullName(request.getFullName());
         doctor.setSpecialization(request.getSpecialization());
+        doctor.setSpecialtyId(request.getSpecialtyId());
         doctor.setLicenseNumber(request.getLicenseNumber());
         doctor.setPhone(request.getPhone());
         doctor.setEmail(request.getEmail());
