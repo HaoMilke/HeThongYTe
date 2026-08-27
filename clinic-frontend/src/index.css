@@ -1,0 +1,344 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+:root {
+  /* LIGHT MODE TOKENS - HIGH CONTRAST */
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-primary-light: #eff6ff;
+  
+  --color-success: #16a34a;
+  --color-success-light: #f0fdf4;
+  
+  --color-warning: #d97706;
+  --color-warning-light: #fffbeb;
+  
+  --color-danger: #dc2626;
+  --color-danger-light: #fef2f2;
+  
+  --color-purple: #8b5cf6;
+  --color-purple-light: #f5f3ff;
+
+  --color-bg: #f8fafc;
+  --color-card: #ffffff;
+  --color-border: #e2e8f0;
+  
+  --color-text-main: #0f172a;
+  --color-text-muted: #334155;
+  --color-text-subtle: #64748b;
+  --color-input-bg: #ffffff;
+
+  --radius-card: 16px;
+  --radius-btn: 12px;
+  --radius-input: 10px;
+
+  --shadow-subtle: 0 1px 3px rgba(15, 23, 42, 0.08);
+  --shadow-hover: 0 4px 12px rgba(15, 23, 42, 0.12);
+
+  --font-family: 'Inter', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+[data-theme="dark"] {
+  /* DARK MODE TOKENS - HIGH CONTRAST */
+  --color-bg: #0f172a;
+  --color-card: #1e293b;
+  --color-border: #334155;
+  
+  --color-text-main: #f8fafc;
+  --color-text-muted: #e2e8f0;
+  --color-text-subtle: #94a3b8;
+  --color-input-bg: #1e293b;
+
+  --color-primary-light: rgba(37, 99, 235, 0.2);
+  --color-success-light: rgba(22, 163, 74, 0.2);
+  --color-warning-light: rgba(217, 119, 6, 0.2);
+  --color-danger-light: rgba(220, 38, 38, 0.2);
+  --color-purple-light: rgba(139, 92, 246, 0.2);
+  
+  --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.6);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--color-bg);
+  color: var(--color-text-main);
+  line-height: 1.5;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+/* Page Container (Max Width 1440px) */
+.page-container {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 24px 32px;
+}
+
+/* Medical SaaS Card */
+.saas-card {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-subtle);
+  padding: 24px;
+  color: var(--color-text-main);
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background-color 200ms ease;
+}
+
+.saas-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--color-primary);
+}
+
+/* Typography Hierarchy */
+.page-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text-main);
+  line-height: 1.25;
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-text-main);
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-main);
+}
+
+.body-text {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.small-text {
+  font-size: 12px;
+  color: var(--color-text-subtle);
+}
+
+/* Form Inputs & Selects - Perfect Contrast 100% */
+.input-field {
+  width: 100%;
+  height: 44px;
+  padding: 0 16px;
+  background-color: var(--color-input-bg) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-input);
+  color: var(--color-text-main) !important;
+  font-size: 14px;
+  font-family: var(--font-family);
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+select.input-field {
+  color: var(--color-text-main) !important;
+  background-color: var(--color-input-bg) !important;
+}
+
+select.input-field option {
+  background-color: var(--color-card) !important;
+  color: var(--color-text-main) !important;
+}
+
+textarea.input-field {
+  height: auto;
+  padding: 12px 16px;
+}
+
+.input-field:focus {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+/* Buttons Hierarchy */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 20px;
+  background-color: var(--color-primary);
+  color: #ffffff !important;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  border-radius: var(--radius-btn);
+  cursor: pointer;
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-hover);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 20px;
+  background-color: var(--color-card);
+  color: var(--color-text-main);
+  font-weight: 600;
+  font-size: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-btn);
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.btn-secondary:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 20px;
+  background-color: var(--color-danger);
+  color: #ffffff !important;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  border-radius: var(--radius-btn);
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+.btn-danger:hover {
+  background-color: #b91c1c;
+}
+
+.btn-ai {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 20px;
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  color: #ffffff !important;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  border-radius: var(--radius-btn);
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(168, 85, 247, 0.3);
+  transition: all 160ms ease;
+}
+
+.btn-ai:hover {
+  transform: translateY(-1px);
+}
+
+/* Tables - High Contrast */
+.saas-table-container {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  box-shadow: var(--shadow-subtle);
+}
+
+.saas-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 14px;
+}
+
+.saas-table th {
+  background-color: var(--color-bg);
+  color: var(--color-text-subtle);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.saas-table td {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-main);
+  height: 60px;
+}
+
+.saas-table tr:last-child td {
+  border-bottom: none;
+}
+
+.saas-table tr:hover td {
+  background-color: var(--color-primary-light);
+}
+
+/* Status Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-success { background: var(--color-success-light); color: var(--color-success); border: 1px solid var(--color-success); }
+.badge-warning { background: var(--color-warning-light); color: var(--color-warning); border: 1px solid var(--color-warning); }
+.badge-info { background: var(--color-primary-light); color: var(--color-primary); border: 1px solid var(--color-primary); }
+.badge-danger { background: var(--color-danger-light); color: var(--color-danger); border: 1px solid var(--color-danger); }
+.badge-purple { background: var(--color-purple-light); color: var(--color-purple); border: 1px solid var(--color-purple); }
+
+/* Modal overlay */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 24px;
+  animation: fadeIn 150ms ease-out;
+}
+
+.modal-container {
+  background-color: var(--color-card);
+  color: var(--color-text-main);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}

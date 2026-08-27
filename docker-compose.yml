@@ -1,0 +1,139 @@
+version: '3.8'
+
+services:
+  # 1. Eureka Discovery Server
+  discovery-server:
+    build: ./clinic-management-microservices/discovery-server
+    container_name: clinic-discovery-server
+    ports:
+      - "8761:8761"
+    networks:
+      - clinic-network
+
+  # 2. API Gateway
+  api-gateway:
+    build: ./clinic-management-microservices/api-gateway
+    container_name: clinic-api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+    depends_on:
+      - discovery-server
+    networks:
+      - clinic-network
+
+  # 3. Auth Service
+  auth-service:
+    build: ./clinic-management-microservices/auth-service
+    container_name: clinic-auth-service
+    ports:
+      - "8081:8081"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+    depends_on:
+      - discovery-server
+    networks:
+      - clinic-network
+
+  # 4. Patient Service
+  patient-service:
+    build: ./clinic-management-microservices/patient-service
+    container_name: clinic-patient-service
+    ports:
+      - "8082:8082"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+    depends_on:
+      - discovery-server
+    networks:
+      - clinic-network
+
+  # 5. Doctor Service
+  doctor-service:
+    build: ./clinic-management-microservices/doctor-service
+    container_name: clinic-doctor-service
+    ports:
+      - "8083:8083"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+    depends_on:
+      - discovery-server
+    networks:
+      - clinic-network
+
+  # 6. Appointment Service
+  appointment-service:
+    build: ./clinic-management-microservices/appointment-service
+    container_name: clinic-appointment-service
+    ports:
+      - "8084:8084"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+    depends_on:
+      - discovery-server
+    networks:
+      - clinic-network
+
+  # 7. Medical Service
+  medical-service:
+    build: ./clinic-management-microservices/medical-service
+    container_name: clinic-medical-service
+    ports:
+      - "8085:8085"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+    depends_on:
+      - discovery-server
+    networks:
+      - clinic-network
+
+  # 8. Prescription Service
+  prescription-service:
+    build: ./clinic-management-microservices/prescription-service
+    container_name: clinic-prescription-service
+    ports:
+      - "8086:8086"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+    depends_on:
+      - discovery-server
+    networks:
+      - clinic-network
+
+  # 9. Payment Service
+  payment-service:
+    build: ./clinic-management-microservices/payment-service
+    container_name: clinic-payment-service
+    ports:
+      - "8087:8087"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+    depends_on:
+      - discovery-server
+    networks:
+      - clinic-network
+
+  # 10. Python FastAPI AI Service
+  ai-service:
+    build: ./clinic-management-microservices/ai-service
+    container_name: clinic-ai-service
+    ports:
+      - "8000:8000"
+    networks:
+      - clinic-network
+
+  # 11. React Vite Frontend
+  clinic-frontend:
+    build: ./clinic-frontend
+    container_name: clinic-frontend-ui
+    ports:
+      - "5173:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - clinic-network
+
+networks:
+  clinic-network:
+    driver: bridge
