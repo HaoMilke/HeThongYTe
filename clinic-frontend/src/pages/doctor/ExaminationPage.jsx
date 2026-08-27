@@ -589,8 +589,8 @@ export const ExaminationPage = () => {
                 ),
 
               medicalService
-                .getRecordsByPatient(
-                  app.patientId
+                .getRecordsByDoctor(
+                  doctorId
                 ),
 
               prescriptionService
@@ -625,7 +625,11 @@ export const ExaminationPage = () => {
               Array.isArray(
                 historyResult.value
               )
-                ? historyResult.value
+                ? historyResult.value.filter(
+                    (item) =>
+                      Number(item.patientId) ===
+                      Number(app.patientId)
+                  )
                 : []
             );
           } else {
@@ -894,14 +898,7 @@ export const ExaminationPage = () => {
       event.preventDefault();
 
       setError("");
-              // Create or reuse the invoice for this completed appointment.
-        await paymentService.createInvoice({
-          appointmentId: Number(appointmentId),
-          patientId: Number(appointment.patientId),
-          notes: `Hóa đơn cho lịch khám APP-${appointmentId}`,
-          items: invoiceItems,
-        });
-setSuccessMessage("");
+      setSuccessMessage("");
 
       if (
         !appointment
@@ -1290,11 +1287,25 @@ setSaving(true);
         }
 
         // =============================================
+        // STEP 5
+        // CREATE / REUSE INVOICE
+        // =============================================
+
+        const savedInvoice =
+          await paymentService.createInvoice({
+            appointmentId: Number(appointmentId),
+            patientId: Number(appointment.patientId),
+            notes: `Hóa đơn cho lịch khám APP-${appointmentId}`,
+            items: invoiceItems,
+          });
+        // =============================================
         // SUCCESS
         // =============================================
 
         setSuccessMessage(
-          "Đã hoàn tất ca khám, lưu hồ sơ và tạo hóa đơn thanh toán."
+          savedInvoice?.id
+            ? `Đã hoàn tất ca khám và tạo hóa đơn INV-${savedInvoice.id}.`
+            : "Đã hoàn tất ca khám và tạo hóa đơn thanh toán."
         );
 
         window.setTimeout(

@@ -1233,133 +1233,227 @@ export const PatientDashboard = () => {
               {/* INVOICES */}
               {/* ===================================== */}
 
-              {activeTab ===
-                "invoices" &&
-                (invoices.length ===
-                0 ? (
+              {activeTab === "invoices" &&
+                (invoices.length === 0 ? (
                   <EmptyState
-                    title="Không có hóa đơn"
-                    message="Bạn chưa có hóa đơn khám chữa bệnh."
+                    title="Chưa có hóa đơn"
+                    message="Hóa đơn sẽ xuất hiện tại đây sau khi bác sĩ hoàn tất ca khám."
                   />
                 ) : (
-                  <div className="saas-table-container">
-                    <table className="saas-table">
-                      <thead>
-                        <tr>
-                          <th>
-                            Mã Hóa Đơn
-                          </th>
+                  <div className="space-y-5">
+                    {[...invoices]
+                      .sort((a, b) => {
+                        const rank = {
+                          UNPAID: 0,
+                          PAID: 1,
+                          CANCELLED: 2,
+                        };
 
-                          <th>
-                            Lịch khám
-                          </th>
-
-                          <th>
-                            Tổng tiền
-                          </th>
-
-                          <th>
-                            Trạng thái
-                          </th>
-
-                          <th>
-                            Giao dịch
-                          </th>
-
-                          <th className="text-right">
-                            Thanh toán
-                          </th>
-                        </tr>
-                      </thead>
-
-                      <tbody>
-                        {invoices.map(
-                          (
+                        return (
+                          (rank[a.status] ?? 9) -
+                          (rank[b.status] ?? 9)
+                        );
+                      })
+                      .map((invoice) => {
+                        const payment =
+                          getPaymentForInvoice(
                             invoice
-                          ) => {
-                            const payment =
-                              getPaymentForInvoice(
-                                invoice
-                              );
+                          );
 
-                            return (
-                              <tr
-                                key={
-                                  invoice.id
-                                }
-                              >
-                                <td className="font-mono font-bold">
-                                  INV-
-                                  {
-                                    invoice.id
-                                  }
-                                </td>
+                        const items =
+                          Array.isArray(
+                            invoice.items
+                          )
+                            ? invoice.items
+                            : [];
 
-                                <td>
-                                  {invoice.appointmentId
-                                    ? `APP-${invoice.appointmentId}`
-                                    : "---"}
-                                </td>
+                        return (
+                          <div
+                            key={invoice.id}
+                            className="saas-card p-5 space-y-5 border border-slate-200 dark:border-slate-800"
+                          >
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div>
+                                <div className="text-xs uppercase tracking-wider text-slate-500 font-bold">
+                                  Hóa đơn khám chữa bệnh
+                                </div>
 
-                                <td className="font-extrabold text-blue-600 dark:text-blue-400">
+                                <div className="font-mono font-black text-xl text-slate-900 dark:text-white mt-0.5">
+                                  INV-{invoice.id}
+                                </div>
+
+                                <div className="small-text mt-1">
+                                  Lịch khám:{" "}
+                                  <span className="font-mono font-bold">
+                                    {invoice.appointmentId
+                                      ? `APP-${invoice.appointmentId}`
+                                      : "---"}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <StatusBadge
+                                status={invoice.status}
+                              />
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                              <div className="rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4">
+                                <div className="small-text">
+                                  Tiền khám
+                                </div>
+
+                                <div className="font-extrabold mt-1">
+                                  {formatMoney(
+                                    invoice.examinationAmount ??
+                                      0
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4">
+                                <div className="small-text">
+                                  Tiền thuốc
+                                </div>
+
+                                <div className="font-extrabold mt-1">
+                                  {formatMoney(
+                                    invoice.medicineAmount ??
+                                      0
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4">
+                                <div className="small-text">
+                                  Chi phí khác
+                                </div>
+
+                                <div className="font-extrabold mt-1">
+                                  {formatMoney(
+                                    invoice.otherAmount ??
+                                      0
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            {items.length > 0 && (
+                              <div className="space-y-2">
+                                <div className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                                  Chi tiết
+                                </div>
+
+                                <div className="rounded-xl border border-slate-200 dark:border-slate-800 divide-y divide-slate-200 dark:divide-slate-800">
+                                  {items.map(
+                                    (
+                                      item,
+                                      index
+                                    ) => (
+                                      <div
+                                        key={
+                                          item.id ||
+                                          `${invoice.id}-${index}`
+                                        }
+                                        className="flex items-start justify-between gap-4 p-3 text-xs"
+                                      >
+                                        <div>
+                                          <div className="font-semibold">
+                                            {item.description ||
+                                              "Chi phí"}
+                                          </div>
+
+                                          <div className="small-text mt-0.5">
+                                            {item.quantity ??
+                                              1}{" "}
+                                            ×{" "}
+                                            {formatMoney(
+                                              item.unitPrice ??
+                                                0
+                                            )}
+                                          </div>
+                                        </div>
+
+                                        <div className="font-bold whitespace-nowrap">
+                                          {formatMoney(
+                                            item.amount ??
+                                              Number(
+                                                item.unitPrice ??
+                                                  0
+                                              ) *
+                                                Number(
+                                                  item.quantity ??
+                                                    1
+                                                )
+                                          )}
+                                        </div>
+                                      </div>
+                                    )
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 p-4 flex flex-wrap items-end justify-between gap-4">
+                              <div>
+                                <div className="text-xs font-bold text-blue-700 dark:text-blue-300">
+                                  Tổng thanh toán
+                                </div>
+
+                                <div className="text-3xl font-black text-blue-600 dark:text-blue-400 mt-1">
                                   {formatMoney(
                                     invoice.totalAmount
                                   )}
-                                </td>
+                                </div>
+                              </div>
 
-                                <td>
+                              <div className="text-right">
+                                <div className="small-text mb-1">
+                                  Giao dịch
+                                </div>
+
+                                {payment ? (
                                   <StatusBadge
                                     status={
-                                      invoice.status
+                                      payment.status
                                     }
                                   />
-                                </td>
+                                ) : (
+                                  <span className="small-text">
+                                    Chưa tạo giao dịch
+                                  </span>
+                                )}
+                              </div>
+                            </div>
 
-                                <td>
-                                  {payment ? (
-                                    <StatusBadge
-                                      status={
-                                        payment.status
-                                      }
-                                    />
-                                  ) : (
-                                    <span className="small-text">
-                                      Chưa tạo
-                                    </span>
-                                  )}
-                                </td>
-
-                                <td className="text-right">
-                                  {invoice.status ===
-                                  "UNPAID" ? (
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        openPaymentModal(
-                                          invoice
-                                        )
-                                      }
-                                      className="btn-primary text-xs h-9 py-0 px-3 ml-auto"
-                                    >
-                                      Thanh Toán
-                                    </button>
-                                  ) : invoice.status ===
-                                    "PAID" ? (
-                                    <span className="text-xs text-emerald-600 font-bold">
-                                      Đã thanh toán
-                                    </span>
-                                  ) : (
-                                    <span className="small-text">
-                                      ---
-                                    </span>
-                                  )}
-                                </td>
-                              </tr>
-                            );
-                          }
-                        )}
-                      </tbody>
-                    </table>
+                            {invoice.status ===
+                            "UNPAID" ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openPaymentModal(
+                                    invoice
+                                  )
+                                }
+                                className="btn-primary w-full h-11 text-sm font-bold flex items-center justify-center gap-2"
+                              >
+                                <QrCode className="w-4 h-4" />
+                                Thanh Toán QR / Chuyển Khoản
+                              </button>
+                            ) : invoice.status ===
+                              "PAID" ? (
+                              <div className="rounded-xl p-3 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 font-bold text-sm flex items-center justify-center gap-2">
+                                <CheckCircle className="w-5 h-5" />
+                                Hóa đơn đã được thanh toán
+                              </div>
+                            ) : (
+                              <div className="small-text">
+                                Hóa đơn hiện không thể thanh toán.
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                   </div>
                 ))}
             </div>

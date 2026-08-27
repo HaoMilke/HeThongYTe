@@ -1102,76 +1102,193 @@ export const ReceptionistDashboard =
           {/* ========================================= */}
 
           <div className="lg:col-span-5 space-y-4">
-            <h3 className="section-title flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-amber-600" />
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 className="section-title flex items-center gap-2">
+                  <CreditCard className="w-5 h-5 text-amber-600" />
+                  Quầy Thu Tiền
+                </h3>
 
-              Quầy Thu Tiền
-            </h3>
+                <p className="small-text mt-1">
+                  Hóa đơn được tạo tự động sau khi bác sĩ hoàn tất ca khám.
+                </p>
+              </div>
+
+              <span className="px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 text-xs font-bold">
+                {unpaidCount} hóa đơn chưa thu
+              </span>
+            </div>
 
             {loading ? (
-              <LoadingSkeleton.TableSkeleton
-                rows={3}
-              />
-            ) : invoices.length ===
-              0 ? (
+              <LoadingSkeleton.TableSkeleton rows={3} />
+            ) : invoices.length === 0 ? (
               <EmptyState
-                title="Không có hóa đơn"
-                message="Chưa có hóa đơn nào."
+                title="Chưa có hóa đơn cần xử lý"
+                message="Khi bác sĩ hoàn tất khám, hóa đơn sẽ tự động xuất hiện tại quầy thu tiền."
               />
             ) : (
               <div className="space-y-4">
-                {invoices.map(
-                  (invoice) => {
+                {[...invoices]
+                  .sort((a, b) => {
+                    const rank = {
+                      UNPAID: 0,
+                      PAID: 1,
+                      CANCELLED: 2,
+                    };
+
+                    return (
+                      (rank[a.status] ?? 9) -
+                      (rank[b.status] ?? 9)
+                    );
+                  })
+                  .map((invoice) => {
                     const patient =
                       patientMap.get(
-                        Number(
-                          invoice.patientId
-                        )
+                        Number(invoice.patientId)
                       );
+
+                    const items =
+                      Array.isArray(invoice.items)
+                        ? invoice.items
+                        : [];
 
                     return (
                       <div
-                        key={
-                          invoice.id
-                        }
-                        className="saas-card space-y-3 p-4 text-xs"
+                        key={invoice.id}
+                        className="saas-card p-5 space-y-4 border border-slate-200 dark:border-slate-800"
                       >
-                        <div className="flex items-center justify-between">
-                          <span className="font-mono font-extrabold">
-                            INV-
-                            {
-                              invoice.id
-                            }
-                          </span>
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                              Hóa đơn
+                            </div>
 
-                          <StatusBadge
-                            status={
-                              invoice.status
-                            }
-                          />
+                            <div className="font-mono font-black text-lg text-slate-900 dark:text-white">
+                              INV-{invoice.id}
+                            </div>
+                          </div>
+
+                          <StatusBadge status={invoice.status} />
                         </div>
 
-                        <div className="small-text">
-                          {patient?.fullName ||
-                            `Bệnh nhân #${invoice.patientId}`}
+                        <div className="rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 space-y-1.5">
+                          <div className="font-bold text-sm text-slate-900 dark:text-white">
+                            {patient?.fullName ||
+                              `Bệnh nhân #${invoice.patientId}`}
+                          </div>
+
+                          {patient?.phone && (
+                            <div className="small-text">
+                              SĐT: {patient.phone}
+                            </div>
+                          )}
+
+                          <div className="small-text">
+                            Lịch khám:{" "}
+                            <span className="font-mono font-bold">
+                              {invoice.appointmentId
+                                ? `APP-${invoice.appointmentId}`
+                                : "---"}
+                            </span>
+                          </div>
                         </div>
 
-                        <div className="flex items-center justify-between">
-                          <span className="small-text">
-                            {invoice.appointmentId
-                              ? `APP-${invoice.appointmentId}`
-                              : "---"}
-                          </span>
+                        <div className="grid grid-cols-3 gap-2 text-xs">
+                          <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-3">
+                            <div className="small-text">Tiền khám</div>
+                            <div className="font-bold mt-1">
+                              {formatMoney(
+                                invoice.examinationAmount ?? 0
+                              )}
+                            </div>
+                          </div>
 
-                          <span className="font-extrabold text-base text-blue-600 dark:text-blue-400">
-                            {formatMoney(
-                              invoice.totalAmount
-                            )}
-                          </span>
+                          <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-3">
+                            <div className="small-text">Tiền thuốc</div>
+                            <div className="font-bold mt-1">
+                              {formatMoney(
+                                invoice.medicineAmount ?? 0
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-3">
+                            <div className="small-text">Chi phí khác</div>
+                            <div className="font-bold mt-1">
+                              {formatMoney(
+                                invoice.otherAmount ?? 0
+                              )}
+                            </div>
+                          </div>
                         </div>
 
-                        {invoice.status ===
-                        "UNPAID" ? (
+                        {items.length > 0 && (
+                          <div className="space-y-2">
+                            <div className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                              Chi tiết hóa đơn
+                            </div>
+
+                            <div className="rounded-xl border border-slate-200 dark:border-slate-800 divide-y divide-slate-200 dark:divide-slate-800">
+                              {items.map((item, index) => (
+                                <div
+                                  key={
+                                    item.id ||
+                                    `${invoice.id}-${index}`
+                                  }
+                                  className="flex items-start justify-between gap-3 p-3 text-xs"
+                                >
+                                  <div>
+                                    <div className="font-semibold">
+                                      {item.description || "Chi phí"}
+                                    </div>
+
+                                    <div className="small-text mt-0.5">
+                                      {item.quantity ?? 1} ×{" "}
+                                      {formatMoney(
+                                        item.unitPrice ?? 0
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <div className="font-bold whitespace-nowrap">
+                                    {formatMoney(
+                                      item.amount ??
+                                        Number(
+                                          item.unitPrice ?? 0
+                                        ) *
+                                          Number(
+                                            item.quantity ?? 1
+                                          )
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex items-end justify-between gap-4 pt-1">
+                          <div>
+                            <div className="small-text">
+                              Tổng cần thanh toán
+                            </div>
+
+                            <div className="text-2xl font-black text-blue-600 dark:text-blue-400">
+                              {formatMoney(
+                                invoice.totalAmount
+                              )}
+                            </div>
+                          </div>
+
+                          {invoice.status === "PAID" && (
+                            <div className="text-emerald-600 font-bold flex items-center gap-1 text-xs">
+                              <CheckCircle2 className="w-4 h-4" />
+                              Đã thanh toán
+                            </div>
+                          )}
+                        </div>
+
+                        {invoice.status === "UNPAID" ? (
                           <button
                             type="button"
                             onClick={() =>
@@ -1179,26 +1296,18 @@ export const ReceptionistDashboard =
                                 invoice.id
                               )
                             }
-                            className="btn-primary w-full h-9 text-xs font-bold"
+                            className="btn-primary w-full h-10 text-xs font-bold"
                           >
                             Thu Tiền Tại Quầy
                           </button>
-                        ) : invoice.status ===
-                          "PAID" ? (
-                          <div className="text-emerald-600 font-bold flex items-center gap-1">
-                            <CheckCircle2 className="w-4 h-4" />
-
-                            Đã thanh toán
+                        ) : invoice.status !== "PAID" ? (
+                          <div className="small-text">
+                            Hóa đơn hiện không thể thu tiền.
                           </div>
-                        ) : (
-                          <span className="small-text">
-                            Không thể thu
-                          </span>
-                        )}
+                        ) : null}
                       </div>
                     );
-                  }
-                )}
+                  })}
               </div>
             )}
           </div>

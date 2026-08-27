@@ -115,8 +115,8 @@ const getActionForStatus = (
 
     case "COMPLETED":
       return {
-        type: "DONE",
-        label: "Đã khám xong",
+        type: "RECOVER",
+        label: "Mở Hồ Sơ / Hóa Đơn",
       };
 
     case "CANCELLED":
@@ -369,8 +369,12 @@ export const DoctorDashboard = () => {
       // -----------------------------------------------
 
       if (
-        appointment.status ===
-        "EXAMINING"
+        [
+          "EXAMINING",
+          "COMPLETED",
+        ].includes(
+          appointment.status
+        )
       ) {
         navigate(
           `/doctor/examination/${appointment.id}`
@@ -504,6 +508,33 @@ export const DoctorDashboard = () => {
             {
               action.label
             }
+          </span>
+        </button>
+      );
+    }
+
+    // -----------------------------------------------
+    // RECOVER / REVIEW COMPLETED EXAM
+    // -----------------------------------------------
+
+    if (
+      action.type ===
+      "RECOVER"
+    ) {
+      return (
+        <button
+          type="button"
+          onClick={() =>
+            handleExamAction(
+              appointment
+            )
+          }
+          className="btn-secondary text-xs h-9 py-0 px-3 flex items-center gap-1.5 ml-auto"
+        >
+          <ArrowRight className="w-3.5 h-3.5" />
+
+          <span>
+            {action.label}
           </span>
         </button>
       );
