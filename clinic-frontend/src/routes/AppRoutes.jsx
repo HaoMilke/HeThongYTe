@@ -172,6 +172,38 @@ export const AppRoutes = ({ onOpenAiModal }) => {
         }
       />
 
+      <Route
+        path="/admin/doctors"
+        element={
+          <RoleRoute allowedRoles={[ROLES.ADMIN]}>
+            <AdminDashboard />
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/admin/specialties"
+        element={
+          <RoleRoute allowedRoles={[ROLES.ADMIN]}>
+            <AdminDashboard />
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/admin/medicines"
+        element={
+          <RoleRoute allowedRoles={[ROLES.ADMIN]}>
+            <AdminDashboard />
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/admin/users"
+        element={
+          <RoleRoute allowedRoles={[ROLES.ADMIN]}>
+            <AdminDashboard />
+          </RoleRoute>
+        }
+      />
       {/* 404 NOT FOUND */}
       <Route path="*" element={<NotFound />} />
     </Routes>
