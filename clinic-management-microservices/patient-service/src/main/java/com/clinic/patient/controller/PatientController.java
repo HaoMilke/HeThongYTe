@@ -44,6 +44,22 @@ public class PatientController {
         }
     }
 
+    @PostMapping("/me")
+    public ResponseEntity<?> createCurrentPatient(
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestBody Patient patient
+    ) {
+        try {
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(patientService.createCurrentPatient(userId, patient));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(e.getMessage());
+        }
+    }
+
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentPatient(
             @RequestHeader("X-User-Id") Long userId

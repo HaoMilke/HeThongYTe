@@ -192,12 +192,17 @@ export const AuthProvider = ({
             throw error;
           }
 
-          console.warn(
-            "Patient profile chưa tồn tại:",
-            error?.message
-          );
-
-          loadedPatient = null;
+          // Tài khoản Patient mới đăng ký chưa có business profile.
+          // Tạo hồ sơ chính chủ; backend tự lấy userId từ JWT.
+          loadedPatient =
+            await patientService
+              .createCurrentPatient({
+                fullName:
+                  authUser?.fullName ||
+                  "Bệnh nhân",
+                phone:
+                  authUser?.phone || "",
+              });
         }
       }
 

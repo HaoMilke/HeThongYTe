@@ -1,0 +1,219 @@
+From c6aaa311ee0fc5fb54273956567e03385029427f Mon Sep 17 00:00:00 2001
+From: Codex <codex@openai.com>
+Date: Thu, 27 Aug 2026 00:39:32 -0700
+Subject: [PATCH] fix: auto-create patient profile on first login
+
+---
+ clinic-frontend/src/context/AuthContext.jsx   | 17 ++++++----
+ clinic-frontend/src/pages/AdminDashboard.jsx  | 17 +---------
+ .../src/services/patientService.js            |  9 +++++
+ .../clinic/gateway/config/SecurityConfig.java |  5 ++-
+ .../patient/controller/PatientController.java | 18 +++++++++-
+ .../patient/service/PatientService.java       | 34 ++++++++++++++++++-
+ 6 files changed, 75 insertions(+), 25 deletions(-)
+
+diff --git a/clinic-frontend/src/context/AuthContext.jsx b/clinic-frontend/src/context/AuthContext.jsx
+index d5235ee..bb49834 100644
+--- a/clinic-frontend/src/context/AuthContext.jsx
++++ b/clinic-frontend/src/context/AuthContext.jsx
+@@ -192,12 +192,17 @@ export const AuthProvider = ({
+             throw error;
+           }
+ 
+-          console.warn(
+-            "Patient profile chưa tồn tại:",
+-            error?.message
+-          );
+-
+-          loadedPatient = null;
++          // Tài khoản Patient mới đăng ký chưa có business profile.
++          // Tạo hồ sơ chính chủ; backend tự lấy userId từ JWT.
++          loadedPatient =
++            await patientService
++              .createCurrentPatient({
++                fullName:
++                  authUser?.fullName ||
++                  "Bệnh nhân",
++                phone:
++                  authUser?.phone || "",
++              });
+         }
+       }
+ 
+diff --git a/clinic-frontend/src/pages/AdminDashboard.jsx b/clinic-frontend/src/pages/AdminDashboard.jsx
+index 8f7f294..e2148e1 100644
+--- a/clinic-frontend/src/pages/AdminDashboard.jsx
++++ b/clinic-frontend/src/pages/AdminDashboard.jsx
+@@ -3,7 +3,6 @@ import { AlertCircle, Pill, Plus, RefreshCw, ShieldCheck, Stethoscope, Users } f
+ import { authService } from "../services/authService";
+ import { doctorService } from "../services/doctorService";
+ import { prescriptionService } from "../services/prescriptionService";
+-import { patientService } from "../services/patientService";
+ import DashboardLayout from "../layouts/DashboardLayout";
+ import PageHeader from "../components/common/PageHeader";
+ import LoadingSkeleton from "../components/common/LoadingSkeleton";
+@@ -95,20 +94,6 @@ export const AdminDashboard = () => {
+     catch (requestError) { setError(requestError?.message || "Không thể cập nhật tồn kho."); }
+   };
+ 
+-  const createPatientProfile = async (user) => {
+-    setError("");
+-    try {
+-      await patientService.createPatient({
+-        userId: user.id,
+-        fullName: user.fullName,
+-        phone: user.phone || "",
+-      });
+-      notify("Đã tạo hồ sơ bệnh nhân cho tài khoản.");
+-    } catch (requestError) {
+-      setError(requestError?.message || "Không thể tạo hồ sơ bệnh nhân.");
+-    }
+-  };
+-
+   const tabs = [{ id: "doctors", label: "Bác sĩ" }, { id: "specialties", label: "Chuyên khoa" }, { id: "medicines", label: "Kho thuốc" }, { id: "users", label: "Tài khoản & quyền" }];
+ 
+   return <DashboardLayout>
+@@ -123,7 +108,7 @@ export const AdminDashboard = () => {
+       {activeTab === "doctors" && <section><Header title="Danh sách bác sĩ" action={() => setModal("doctor")} label="Thêm bác sĩ" /><Table heads={["ID", "Họ tên", "Chuyên khoa", "Kinh nghiệm", "Trạng thái"]}>{doctors.map((item) => <tr key={item.id}><td>DOC-{item.id}</td><td>{item.fullName}</td><td>{item.specialization || "---"}</td><td>{item.experienceYears ?? 0} năm</td><td>{item.available === false ? "Tạm nghỉ" : "Đang làm việc"}</td></tr>)}</Table></section>}
+       {activeTab === "specialties" && <section><Header title="Danh sách chuyên khoa" action={() => setModal("specialty")} label="Thêm chuyên khoa" /><div className="grid md:grid-cols-3 gap-4">{specialties.map((item) => <div key={item.id} className="saas-card"><div className="font-bold">{item.name}</div><p className="small-text my-2">{item.description || "Chưa có mô tả"}</p><div className="flex justify-between items-center"><span className={item.active === false ? "text-rose-600" : "text-emerald-600"}>{item.active === false ? "Ngừng hoạt động" : "Đang hoạt động"}</span><button type="button" className="btn-secondary" onClick={() => toggleSpecialty(item)}>{item.active === false ? "Mở lại" : "Tạm ngừng"}</button></div></div>)}</div></section>}
+       {activeTab === "medicines" && <section><Header title="Kho thuốc" action={() => setModal("medicine")} label="Thêm thuốc" /><Table heads={["ID", "Tên", "Đơn vị", "Giá", "Tồn kho", "Trạng thái", "Thao tác"]}>{medicines.map((item) => <tr key={item.id}><td>MED-{item.id}</td><td>{item.name}</td><td>{item.unit}</td><td>{money(item.price)}</td><td>{item.stockQuantity}</td><td>{item.active === false ? "Ngừng dùng" : "Đang dùng"}</td><td><button type="button" className="text-blue-600 font-bold" onClick={() => addMedicineStock(item)}>Cập nhật kho</button>{item.active !== false && <button type="button" className="ml-3 text-rose-600 font-bold" onClick={async () => { try { await prescriptionService.deactivateMedicine(item.id); await loadData(); } catch (requestError) { setError(requestError?.message || "Không thể ngừng thuốc."); } }}>Ngừng dùng</button>}</td></tr>)}</Table></section>}
+-      {activeTab === "users" && <section><h3 className="card-title mb-4">Tài khoản và phân quyền</h3><div className="space-y-3">{users.map((user) => <div key={user.id} className="saas-card"><div className="flex flex-wrap justify-between gap-3"><div><div className="font-bold">{user.fullName} <span className="small-text">#{user.id}</span></div><div className="small-text">{user.email}</div></div><div className="flex gap-2">{rolesOf(user).includes("ROLE_PATIENT") && <button type="button" onClick={() => createPatientProfile(user)} className="btn-secondary">Tạo hồ sơ Patient</button>}<button type="button" onClick={() => toggleUser(user)} className={user.enabled === false ? "btn-primary" : "btn-secondary"}>{user.enabled === false ? "Kích hoạt" : "Khóa"}</button></div></div><div className="flex flex-wrap gap-2 mt-3">{ROLE_OPTIONS.map((role) => <button type="button" key={role} onClick={() => toggleRole(user, role)} className={`px-2 py-1 rounded text-xs font-bold ${rolesOf(user).includes(role) ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"}`}>{role}</button>)}</div></div>)}</div></section>}
++      {activeTab === "users" && <section><h3 className="card-title mb-4">Tài khoản và phân quyền</h3><div className="space-y-3">{users.map((user) => <div key={user.id} className="saas-card"><div className="flex flex-wrap justify-between gap-3"><div><div className="font-bold">{user.fullName} <span className="small-text">#{user.id}</span></div><div className="small-text">{user.email}</div></div><div className="flex gap-2"><button type="button" onClick={() => toggleUser(user)} className={user.enabled === false ? "btn-primary" : "btn-secondary"}>{user.enabled === false ? "Kích hoạt" : "Khóa"}</button></div></div><div className="flex flex-wrap gap-2 mt-3">{ROLE_OPTIONS.map((role) => <button type="button" key={role} onClick={() => toggleRole(user, role)} className={`px-2 py-1 rounded text-xs font-bold ${rolesOf(user).includes(role) ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"}`}>{role}</button>)}</div></div>)}</div></section>}
+     </>}
+     {modal && <div className="modal-overlay"><div className="modal-container p-6"><h3 className="card-title mb-4">{modal === "doctor" ? "Thêm bác sĩ" : modal === "specialty" ? "Thêm chuyên khoa" : "Thêm thuốc"}</h3>
+       {modal === "doctor" && <form onSubmit={createDoctor} className="space-y-3"><select className="input-field" required value={doctorForm.userId} onChange={(e) => setDoctorForm({ ...doctorForm, userId: e.target.value })}><option value="">-- Tài khoản có ROLE_DOCTOR --</option>{doctorAccounts.map((user) => <option key={user.id} value={user.id}>{user.fullName} - {user.email}</option>)}</select><input className="input-field" required placeholder="Họ tên bác sĩ" value={doctorForm.fullName} onChange={(e) => setDoctorForm({ ...doctorForm, fullName: e.target.value })} /><select className="input-field" required value={doctorForm.specialtyId} onChange={(e) => setDoctorForm({ ...doctorForm, specialtyId: e.target.value })}><option value="">-- Chuyên khoa --</option>{specialties.filter((item) => item.active !== false).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select><input className="input-field" required placeholder="Số giấy phép" value={doctorForm.licenseNumber} onChange={(e) => setDoctorForm({ ...doctorForm, licenseNumber: e.target.value })} /><input className="input-field" type="number" min="0" placeholder="Số năm kinh nghiệm" value={doctorForm.experienceYears} onChange={(e) => setDoctorForm({ ...doctorForm, experienceYears: e.target.value })} /><ModalButtons saving={saving} close={() => setModal(null)} /></form>}
+diff --git a/clinic-frontend/src/services/patientService.js b/clinic-frontend/src/services/patientService.js
+index 9007c3d..b1e6d7e 100644
+--- a/clinic-frontend/src/services/patientService.js
++++ b/clinic-frontend/src/services/patientService.js
+@@ -12,6 +12,15 @@ export const patientService = {
+     );
+   },
+ 
++  // Patient tự tạo hồ sơ của chính mình trong lần đăng nhập đầu tiên.
++  // Backend lấy userId từ JWT/X-User-Id, không tin userId do browser gửi lên.
++  createCurrentPatient: (data) => {
++    return api.post(
++      "/api/patients/me",
++      data
++    );
++  },
++
+   // =====================================================
+   // CURRENT PATIENT
+   // Backend lấy X-User-Id từ Gateway/JWT
+diff --git a/clinic-management-microservices/api-gateway/src/main/java/com/clinic/gateway/config/SecurityConfig.java b/clinic-management-microservices/api-gateway/src/main/java/com/clinic/gateway/config/SecurityConfig.java
+index 5f18d1d..5aa6c10 100644
+--- a/clinic-management-microservices/api-gateway/src/main/java/com/clinic/gateway/config/SecurityConfig.java
++++ b/clinic-management-microservices/api-gateway/src/main/java/com/clinic/gateway/config/SecurityConfig.java
+@@ -110,6 +110,9 @@ public class SecurityConfig {
+                                 .requestMatchers(HttpMethod.GET, "/api/patients/**")
+                                 .hasAnyRole("PATIENT", "DOCTOR", "RECEPTIONIST", "ADMIN")
+ 
++                                .requestMatchers(HttpMethod.POST, "/api/patients/me", "/api/patients/me/")
++                                .hasRole("PATIENT")
++
+                                 .requestMatchers(HttpMethod.POST, "/api/patients", "/api/patients/")
+                                 .hasAnyRole("RECEPTIONIST", "ADMIN")
+ 
+@@ -233,4 +236,4 @@ public class SecurityConfig {
+ 
+         return http.build();
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/clinic-management-microservices/patient-service/src/main/java/com/clinic/patient/controller/PatientController.java b/clinic-management-microservices/patient-service/src/main/java/com/clinic/patient/controller/PatientController.java
+index 249976c..8a4e846 100644
+--- a/clinic-management-microservices/patient-service/src/main/java/com/clinic/patient/controller/PatientController.java
++++ b/clinic-management-microservices/patient-service/src/main/java/com/clinic/patient/controller/PatientController.java
+@@ -44,6 +44,22 @@ public class PatientController {
+         }
+     }
+ 
++    @PostMapping("/me")
++    public ResponseEntity<?> createCurrentPatient(
++            @RequestHeader("X-User-Id") Long userId,
++            @RequestBody Patient patient
++    ) {
++        try {
++            return ResponseEntity
++                    .status(HttpStatus.CREATED)
++                    .body(patientService.createCurrentPatient(userId, patient));
++        } catch (IllegalArgumentException e) {
++            return ResponseEntity
++                    .badRequest()
++                    .body(e.getMessage());
++        }
++    }
++
+     @GetMapping("/me")
+     public ResponseEntity<?> getCurrentPatient(
+             @RequestHeader("X-User-Id") Long userId
+@@ -251,4 +267,4 @@ public class PatientController {
+         return patient
+                 && !privileged;
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/clinic-management-microservices/patient-service/src/main/java/com/clinic/patient/service/PatientService.java b/clinic-management-microservices/patient-service/src/main/java/com/clinic/patient/service/PatientService.java
+index da9ba11..b20470e 100644
+--- a/clinic-management-microservices/patient-service/src/main/java/com/clinic/patient/service/PatientService.java
++++ b/clinic-management-microservices/patient-service/src/main/java/com/clinic/patient/service/PatientService.java
+@@ -3,6 +3,7 @@ package com.clinic.patient.service;
+ import com.clinic.patient.entity.Patient;
+ import com.clinic.patient.repository.PatientRepository;
+ import org.springframework.stereotype.Service;
++import org.springframework.dao.DataIntegrityViolationException;
+ 
+ import java.util.List;
+ 
+@@ -24,6 +25,37 @@ public class PatientService {
+         return patientRepository.save(patient);
+     }
+ 
++    public Patient createCurrentPatient(
++            Long authenticatedUserId,
++            Patient request
++    ) {
++        if (authenticatedUserId == null) {
++            throw new IllegalArgumentException("Không xác định được tài khoản đăng nhập");
++        }
++
++        return patientRepository.findByUserId(authenticatedUserId)
++                .orElseGet(() -> {
++                    if (request == null
++                            || request.getFullName() == null
++                            || request.getFullName().isBlank()) {
++                        throw new IllegalArgumentException("Họ tên bệnh nhân không được để trống");
++                    }
++
++                    // Không cho dữ liệu từ browser quyết định id/userId chủ sở hữu.
++                    request.setId(null);
++                    request.setUserId(authenticatedUserId);
++
++                    try {
++                        return patientRepository.saveAndFlush(request);
++                    } catch (DataIntegrityViolationException duplicateRequest) {
++                        // Hai request đăng nhập đồng thời: unique(user_id) đảm bảo chỉ
++                        // một hồ sơ được tạo, request còn lại nhận hồ sơ đã tồn tại.
++                        return patientRepository.findByUserId(authenticatedUserId)
++                                .orElseThrow(() -> duplicateRequest);
++                    }
++                });
++    }
++
+     public Patient getPatientById(Long id) {
+         return patientRepository.findById(id)
+                 .orElseThrow(() ->
+@@ -94,4 +126,4 @@ public class PatientService {
+                 requestedUserId
+         );
+     }
+-}
+\ No newline at end of file
++}
+-- 
+2.51.1
+

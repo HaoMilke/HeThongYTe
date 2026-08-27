@@ -3,6 +3,7 @@ package com.clinic.patient.service;
 import com.clinic.patient.entity.Patient;
 import com.clinic.patient.repository.PatientRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.List;
 
@@ -22,6 +23,37 @@ public class PatientService {
         }
 
         return patientRepository.save(patient);
+    }
+
+    public Patient createCurrentPatient(
+            Long authenticatedUserId,
+            Patient request
+    ) {
+        if (authenticatedUserId == null) {
+            throw new IllegalArgumentException("Không xác định được tài khoản đăng nhập");
+        }
+
+        return patientRepository.findByUserId(authenticatedUserId)
+                .orElseGet(() -> {
+                    if (request == null
+                            || request.getFullName() == null
+                            || request.getFullName().isBlank()) {
+                        throw new IllegalArgumentException("Họ tên bệnh nhân không được để trống");
+                    }
+
+                    // Không cho dữ liệu từ browser quyết định id/userId chủ sở hữu.
+                    request.setId(null);
+                    request.setUserId(authenticatedUserId);
+
+                    try {
+                        return patientRepository.saveAndFlush(request);
+                    } catch (DataIntegrityViolationException duplicateRequest) {
+                        // Hai request đăng nhập đồng thời: unique(user_id) đảm bảo chỉ
+                        // một hồ sơ được tạo, request còn lại nhận hồ sơ đã tồn tại.
+                        return patientRepository.findByUserId(authenticatedUserId)
+                                .orElseThrow(() -> duplicateRequest);
+                    }
+                });
     }
 
     public Patient getPatientById(Long id) {

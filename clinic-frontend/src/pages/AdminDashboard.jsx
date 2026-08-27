@@ -3,7 +3,6 @@ import { AlertCircle, Pill, Plus, RefreshCw, ShieldCheck, Stethoscope, Users } f
 import { authService } from "../services/authService";
 import { doctorService } from "../services/doctorService";
 import { prescriptionService } from "../services/prescriptionService";
-import { patientService } from "../services/patientService";
 import DashboardLayout from "../layouts/DashboardLayout";
 import PageHeader from "../components/common/PageHeader";
 import LoadingSkeleton from "../components/common/LoadingSkeleton";
@@ -95,20 +94,6 @@ export const AdminDashboard = () => {
     catch (requestError) { setError(requestError?.message || "Không thể cập nhật tồn kho."); }
   };
 
-  const createPatientProfile = async (user) => {
-    setError("");
-    try {
-      await patientService.createPatient({
-        userId: user.id,
-        fullName: user.fullName,
-        phone: user.phone || "",
-      });
-      notify("Đã tạo hồ sơ bệnh nhân cho tài khoản.");
-    } catch (requestError) {
-      setError(requestError?.message || "Không thể tạo hồ sơ bệnh nhân.");
-    }
-  };
-
   const tabs = [{ id: "doctors", label: "Bác sĩ" }, { id: "specialties", label: "Chuyên khoa" }, { id: "medicines", label: "Kho thuốc" }, { id: "users", label: "Tài khoản & quyền" }];
 
   return <DashboardLayout>
@@ -123,7 +108,7 @@ export const AdminDashboard = () => {
       {activeTab === "doctors" && <section><Header title="Danh sách bác sĩ" action={() => setModal("doctor")} label="Thêm bác sĩ" /><Table heads={["ID", "Họ tên", "Chuyên khoa", "Kinh nghiệm", "Trạng thái"]}>{doctors.map((item) => <tr key={item.id}><td>DOC-{item.id}</td><td>{item.fullName}</td><td>{item.specialization || "---"}</td><td>{item.experienceYears ?? 0} năm</td><td>{item.available === false ? "Tạm nghỉ" : "Đang làm việc"}</td></tr>)}</Table></section>}
       {activeTab === "specialties" && <section><Header title="Danh sách chuyên khoa" action={() => setModal("specialty")} label="Thêm chuyên khoa" /><div className="grid md:grid-cols-3 gap-4">{specialties.map((item) => <div key={item.id} className="saas-card"><div className="font-bold">{item.name}</div><p className="small-text my-2">{item.description || "Chưa có mô tả"}</p><div className="flex justify-between items-center"><span className={item.active === false ? "text-rose-600" : "text-emerald-600"}>{item.active === false ? "Ngừng hoạt động" : "Đang hoạt động"}</span><button type="button" className="btn-secondary" onClick={() => toggleSpecialty(item)}>{item.active === false ? "Mở lại" : "Tạm ngừng"}</button></div></div>)}</div></section>}
       {activeTab === "medicines" && <section><Header title="Kho thuốc" action={() => setModal("medicine")} label="Thêm thuốc" /><Table heads={["ID", "Tên", "Đơn vị", "Giá", "Tồn kho", "Trạng thái", "Thao tác"]}>{medicines.map((item) => <tr key={item.id}><td>MED-{item.id}</td><td>{item.name}</td><td>{item.unit}</td><td>{money(item.price)}</td><td>{item.stockQuantity}</td><td>{item.active === false ? "Ngừng dùng" : "Đang dùng"}</td><td><button type="button" className="text-blue-600 font-bold" onClick={() => addMedicineStock(item)}>Cập nhật kho</button>{item.active !== false && <button type="button" className="ml-3 text-rose-600 font-bold" onClick={async () => { try { await prescriptionService.deactivateMedicine(item.id); await loadData(); } catch (requestError) { setError(requestError?.message || "Không thể ngừng thuốc."); } }}>Ngừng dùng</button>}</td></tr>)}</Table></section>}
-      {activeTab === "users" && <section><h3 className="card-title mb-4">Tài khoản và phân quyền</h3><div className="space-y-3">{users.map((user) => <div key={user.id} className="saas-card"><div className="flex flex-wrap justify-between gap-3"><div><div className="font-bold">{user.fullName} <span className="small-text">#{user.id}</span></div><div className="small-text">{user.email}</div></div><div className="flex gap-2">{rolesOf(user).includes("ROLE_PATIENT") && <button type="button" onClick={() => createPatientProfile(user)} className="btn-secondary">Tạo hồ sơ Patient</button>}<button type="button" onClick={() => toggleUser(user)} className={user.enabled === false ? "btn-primary" : "btn-secondary"}>{user.enabled === false ? "Kích hoạt" : "Khóa"}</button></div></div><div className="flex flex-wrap gap-2 mt-3">{ROLE_OPTIONS.map((role) => <button type="button" key={role} onClick={() => toggleRole(user, role)} className={`px-2 py-1 rounded text-xs font-bold ${rolesOf(user).includes(role) ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"}`}>{role}</button>)}</div></div>)}</div></section>}
+      {activeTab === "users" && <section><h3 className="card-title mb-4">Tài khoản và phân quyền</h3><div className="space-y-3">{users.map((user) => <div key={user.id} className="saas-card"><div className="flex flex-wrap justify-between gap-3"><div><div className="font-bold">{user.fullName} <span className="small-text">#{user.id}</span></div><div className="small-text">{user.email}</div></div><div className="flex gap-2"><button type="button" onClick={() => toggleUser(user)} className={user.enabled === false ? "btn-primary" : "btn-secondary"}>{user.enabled === false ? "Kích hoạt" : "Khóa"}</button></div></div><div className="flex flex-wrap gap-2 mt-3">{ROLE_OPTIONS.map((role) => <button type="button" key={role} onClick={() => toggleRole(user, role)} className={`px-2 py-1 rounded text-xs font-bold ${rolesOf(user).includes(role) ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"}`}>{role}</button>)}</div></div>)}</div></section>}
     </>}
     {modal && <div className="modal-overlay"><div className="modal-container p-6"><h3 className="card-title mb-4">{modal === "doctor" ? "Thêm bác sĩ" : modal === "specialty" ? "Thêm chuyên khoa" : "Thêm thuốc"}</h3>
       {modal === "doctor" && <form onSubmit={createDoctor} className="space-y-3"><select className="input-field" required value={doctorForm.userId} onChange={(e) => setDoctorForm({ ...doctorForm, userId: e.target.value })}><option value="">-- Tài khoản có ROLE_DOCTOR --</option>{doctorAccounts.map((user) => <option key={user.id} value={user.id}>{user.fullName} - {user.email}</option>)}</select><input className="input-field" required placeholder="Họ tên bác sĩ" value={doctorForm.fullName} onChange={(e) => setDoctorForm({ ...doctorForm, fullName: e.target.value })} /><select className="input-field" required value={doctorForm.specialtyId} onChange={(e) => setDoctorForm({ ...doctorForm, specialtyId: e.target.value })}><option value="">-- Chuyên khoa --</option>{specialties.filter((item) => item.active !== false).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select><input className="input-field" required placeholder="Số giấy phép" value={doctorForm.licenseNumber} onChange={(e) => setDoctorForm({ ...doctorForm, licenseNumber: e.target.value })} /><input className="input-field" type="number" min="0" placeholder="Số năm kinh nghiệm" value={doctorForm.experienceYears} onChange={(e) => setDoctorForm({ ...doctorForm, experienceYears: e.target.value })} /><ModalButtons saving={saving} close={() => setModal(null)} /></form>}

@@ -12,6 +12,15 @@ export const patientService = {
     );
   },
 
+  // Patient tự tạo hồ sơ của chính mình trong lần đăng nhập đầu tiên.
+  // Backend lấy userId từ JWT/X-User-Id, không tin userId do browser gửi lên.
+  createCurrentPatient: (data) => {
+    return api.post(
+      "/api/patients/me",
+      data
+    );
+  },
+
   // =====================================================
   // CURRENT PATIENT
   // Backend lấy X-User-Id từ Gateway/JWT
